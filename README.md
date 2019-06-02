@@ -1,6 +1,6 @@
-# SHT31 I2C Driver
+# SHT30 I2C Driver
 
-A Mongoose library for Sensirion's SHT31 integrated circuit.
+A Mongoose library for Sensirion's SHT30 integrated circuit.
 
 ## Sensor details
 
@@ -22,7 +22,7 @@ sensor industry.
 See [datasheet](https://cdn-shop.adafruit.com/product-files/2857/Sensirion_Humidity_SHT3x_Datasheet_digital-767294.pdf)
 for implementation details.
 
-A great place to buy a ready made and tested unit is at [Adafruit](https://learn.adafruit.com/adafruit-sht31-d-temperature-and-humidity-sensor-breakout).
+A great place to buy a ready made and tested unit is at [Adafruit](https://learn.adafruit.com/adafruit-sht30-d-temperature-and-humidity-sensor-breakout).
 
 ## Example application
 
@@ -31,17 +31,17 @@ An example program using a timer to read data from the sensor every 5 seconds:
 ```
 #include "mgos.h"
 #include "mgos_i2c.h"
-#include "mgos_sht31.h"
+#include "mgos_sht30.h"
 
-static struct mgos_sht31 *s_sht31;
+static struct mgos_sht30 *s_sht30;
 
 static void timer_cb(void *user_data) {
   float temperature, humidity;
 
-  temperature=mgos_sht31_getTemperature(s_sht31);
-  humidity=mgos_sht31_getHumidity(s_sht31);
+  temperature=mgos_sht30_getTemperature(s_sht30);
+  humidity=mgos_sht30_getHumidity(s_sht30);
 
-  LOG(LL_INFO, ("sht31 temperature=%.2f humidity=%.2f", temperature, humidity));
+  LOG(LL_INFO, ("sht30 temperature=%.2f humidity=%.2f", temperature, humidity));
 
   (void) user_data;
 }
@@ -53,8 +53,8 @@ enum mgos_app_init_result mgos_app_init(void) {
   if (!i2c) {
     LOG(LL_ERROR, ("I2C bus missing, set i2c.enable=true in mos.yml"));
   } else {
-    s_sht31=mgos_sht31_create(i2c, 0x40); // Default I2C address
-    if (s_sht31) {
+    s_sht30=mgos_sht30_create(i2c, 0x40); // Default I2C address
+    if (s_sht30) {
       mgos_set_timer(5000, true, timer_cb, NULL);
     } else {
       LOG(LL_ERROR, ("Could not initialize sensor"));

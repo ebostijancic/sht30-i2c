@@ -15,14 +15,14 @@
  */
 
 #include "mgos.h"
-#include "mgos_sht31_internal.h"
+#include "mgos_sht30_internal.h"
 #include "mgos_i2c.h"
 
 // Datasheet:
 // https://cdn-shop.adafruit.com/product-files/2857/Sensirion_Humidity_SHT3x_Datasheet_digital-767294.pdf
 
 // Private functions follow
-static bool mgos_sht31_cmd(struct mgos_sht31 *sensor, uint16_t cmd) {
+static bool mgos_sht30_cmd(struct mgos_sht30 *sensor, uint16_t cmd) {
   uint8_t data[2];
 
   if (!sensor || !sensor->i2c) {
@@ -53,11 +53,11 @@ static uint8_t crc8(const uint8_t *data, int len) {
   return crc;
 }
 
-static uint16_t mgos_sht31_status(struct mgos_sht31 *sensor) {
+static uint16_t mgos_sht30_status(struct mgos_sht30 *sensor) {
   uint8_t  data[3];
   uint16_t value;
 
-  mgos_sht31_cmd(sensor, MGOS_SHT31_READSTATUS);
+  mgos_sht30_cmd(sensor, MGOS_SHT30_READSTATUS);
   if (!mgos_i2c_read(sensor->i2c, sensor->i2caddr, data, 3, true)) {
     return 0;
   }
@@ -75,43 +75,43 @@ static uint16_t mgos_sht31_status(struct mgos_sht31 *sensor) {
 // Private functions end
 
 // Public functions follow
-struct mgos_sht31 *mgos_sht31_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
-  struct mgos_sht31 *sensor;
+struct mgos_sht30 *mgos_sht30_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
+  struct mgos_sht30 *sensor;
   uint16_t           status0, status1, status2;
 
   if (!i2c) {
     return NULL;
   }
 
-  sensor = calloc(1, sizeof(struct mgos_sht31));
+  sensor = calloc(1, sizeof(struct mgos_sht30));
   if (!sensor) {
     return NULL;
   }
 
-  memset(sensor, 0, sizeof(struct mgos_sht31));
+  memset(sensor, 0, sizeof(struct mgos_sht30));
   sensor->i2caddr = i2caddr;
   sensor->i2c     = i2c;
 
-  mgos_sht31_cmd(sensor, MGOS_SHT31_SOFTRESET);
+  mgos_sht30_cmd(sensor, MGOS_SHT30_SOFTRESET);
 
   // Toggle heater on and off, which shows up in status register bit 13 (0=Off, 1=On)
-  status0 = mgos_sht31_status(sensor); // heater is off, bit13 is 0
-  mgos_sht31_cmd(sensor, MGOS_SHT31_HEATEREN);
-  status1 = mgos_sht31_status(sensor); // heater is on, bit13 is 1
-  mgos_sht31_cmd(sensor, MGOS_SHT31_HEATERDIS);
-  status2 = mgos_sht31_status(sensor); // heater is off, bit13 is 0
+  status0 = mgos_sht30_status(sensor); // heater is off, bit13 is 0
+  mgos_sht30_cmd(sensor, MGOS_SHT30_HEATEREN);
+  status1 = mgos_sht30_status(sensor); // heater is on, bit13 is 1
+  mgos_sht30_cmd(sensor, MGOS_SHT30_HEATERDIS);
+  status2 = mgos_sht30_status(sensor); // heater is off, bit13 is 0
 
   if (((status0 & 0x2000) == 0) && ((status1 & 0x2000) != 0) && ((status2 & 0x2000) == 0)) {
-    LOG(LL_INFO, ("SHT31 created at I2C 0x%02x", i2caddr));
+    LOG(LL_INFO, ("SHT30 created at I2C 0x%02x", i2caddr));
     return sensor;
   }
 
-  LOG(LL_ERROR, ("Failed to create SHT31 at I2C 0x%02x", i2caddr));
+  LOG(LL_ERROR, ("Failed to create SHT30 at I2C 0x%02x", i2caddr));
   free(sensor);
   return NULL;
 }
 
-void mgos_sht31_destroy(struct mgos_sht31 **sensor) {
+void mgos_sht30_destroy(struct mgos_sht30 **sensor) {
   if (!*sensor) {
     return;
   }
@@ -121,7 +121,7 @@ void mgos_sht31_destroy(struct mgos_sht31 **sensor) {
   return;
 }
 
-bool mgos_sht31_read(struct mgos_sht31 *sensor) {
+bool mgos_sht30_read(struct mgos_sht30 *sensor) {
   double start = mg_time();
 
   if (!sensor || !sensor->i2c) {
@@ -130,7 +130,7 @@ bool mgos_sht31_read(struct mgos_sht31 *sensor) {
 
   sensor->stats.read++;
 
-  if (start - sensor->stats.last_read_time < MGOS_SHT31_READ_DELAY) {
+  if (start - sensor->stats.last_read_time < MGOS_SHT30_READ_DELAY) {
     sensor->stats.read_success_cached++;
     return true;
   }
@@ -139,7 +139,7 @@ bool mgos_sht31_read(struct mgos_sht31 *sensor) {
   uint8_t data[6];
   float   humidity, temperature;
 
-  mgos_sht31_cmd(sensor, MGOS_SHT31_MEAS_HIGHREP);
+  mgos_sht30_cmd(sensor, MGOS_SHT30_MEAS_HIGHREP);
 
   mgos_usleep(15000);
 
@@ -170,32 +170,32 @@ bool mgos_sht31_read(struct mgos_sht31 *sensor) {
   return true;
 }
 
-float mgos_sht31_getTemperature(struct mgos_sht31 *sensor) {
-  if (!mgos_sht31_read(sensor)) {
+float mgos_sht30_getTemperature(struct mgos_sht30 *sensor) {
+  if (!mgos_sht30_read(sensor)) {
     return NAN;
   }
 
   return sensor->temperature;
 }
 
-float mgos_sht31_getHumidity(struct mgos_sht31 *sensor) {
-  if (!mgos_sht31_read(sensor)) {
+float mgos_sht30_getHumidity(struct mgos_sht30 *sensor) {
+  if (!mgos_sht30_read(sensor)) {
     return NAN;
   }
 
   return sensor->humidity;
 }
 
-bool mgos_sht31_getStats(struct mgos_sht31 *sensor, struct mgos_sht31_stats *stats) {
+bool mgos_sht30_getStats(struct mgos_sht30 *sensor, struct mgos_sht30_stats *stats) {
   if (!sensor || !stats) {
     return false;
   }
 
-  memcpy((void *)stats, (const void *)&sensor->stats, sizeof(struct mgos_sht31_stats));
+  memcpy((void *)stats, (const void *)&sensor->stats, sizeof(struct mgos_sht30_stats));
   return true;
 }
 
-bool mgos_sht31_i2c_init(void) {
+bool mgos_sht30_i2c_init(void) {
   return true;
 }
 
