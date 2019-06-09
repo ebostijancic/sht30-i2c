@@ -76,7 +76,7 @@ struct mgos_sht30 *mgos_sht30_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
   // Toggle heater on and off, which shows up in status register bit 13 (0=Off, 1=On)
   mgos_sht30_cmd(sensor, MGOS_SHT30_HEATEREN);
 
-  return NULL;
+  return sensor;
 }
 
 void mgos_sht30_destroy(struct mgos_sht30 **sensor) {
