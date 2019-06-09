@@ -53,31 +53,11 @@ static uint8_t crc8(const uint8_t *data, int len) {
   return crc;
 }
 
-static uint16_t mgos_sht30_status(struct mgos_sht30 *sensor) {
-  uint8_t  data[3];
-  uint16_t value;
-
-  mgos_sht30_cmd(sensor, MGOS_SHT30_READSTATUS);
-  if (!mgos_i2c_read(sensor->i2c, sensor->i2caddr, data, 3, true)) {
-    return 0;
-  }
-
-  // Check CRC8 checksums
-  if ((data[2] != crc8(data, 2))) {
-    return 0;
-  }
-
-  value = (data[0] << 8) + data[1];
-
-  return value;
-}
-
 // Private functions end
 
 // Public functions follow
 struct mgos_sht30 *mgos_sht30_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
   struct mgos_sht30 *sensor;
-  uint16_t           status0, status1, status2;
 
   if (!i2c) {
     return NULL;
@@ -93,21 +73,9 @@ struct mgos_sht30 *mgos_sht30_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
   sensor->i2c     = i2c;
 
   mgos_sht30_cmd(sensor, MGOS_SHT30_SOFTRESET);
-
   // Toggle heater on and off, which shows up in status register bit 13 (0=Off, 1=On)
-  status0 = mgos_sht30_status(sensor); // heater is off, bit13 is 0
   mgos_sht30_cmd(sensor, MGOS_SHT30_HEATEREN);
-  status1 = mgos_sht30_status(sensor); // heater is on, bit13 is 1
-  mgos_sht30_cmd(sensor, MGOS_SHT30_HEATERDIS);
-  status2 = mgos_sht30_status(sensor); // heater is off, bit13 is 0
 
-  if (((status0 & 0x2000) == 0) && ((status1 & 0x2000) != 0) && ((status2 & 0x2000) == 0)) {
-    LOG(LL_INFO, ("SHT30 created at I2C 0x%02x", i2caddr));
-    return sensor;
-  }
-
-  LOG(LL_ERROR, ("Failed to create SHT30 at I2C 0x%02x", i2caddr));
-  free(sensor);
   return NULL;
 }
 
