@@ -95,11 +95,11 @@ struct mgos_sht30 *mgos_sht30_create(struct mgos_i2c *i2c, uint8_t i2caddr) {
   status = mgos_sht30_status(sensor);
 
   if ((status & 0x2000) == 0) {
-    LOG(LL_INFO, ("SHT31 created at I2C 0x%02x", i2caddr));
+    LOG(LL_INFO, ("SHT30 created at I2C 0x%02x", i2caddr));
     return sensor;
   }
 
-  LOG(LL_ERROR, ("Failed to create SHT31 at I2C 0x%02x", i2caddr));
+  LOG(LL_ERROR, ("Failed to create SHT30 at I2C 0x%02x", i2caddr));
   free(sensor);
   return NULL;
 }
